@@ -37,6 +37,3 @@ extension EquipmentStatus {
         }
     }
 }
-
-
-

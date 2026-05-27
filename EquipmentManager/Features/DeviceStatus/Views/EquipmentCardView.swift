@@ -4,6 +4,7 @@
 //
 //  Created by Marek Hac on 25/05/2026.
 //
+
 import Combine
 import SwiftUI
 
@@ -125,4 +126,3 @@ private extension EquipmentCardView {
         }
     }
 }
-

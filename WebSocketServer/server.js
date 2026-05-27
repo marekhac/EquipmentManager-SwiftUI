@@ -5,7 +5,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 wss.on('connection', (ws) => {
     console.log('Client connected');
 
-    // Every 5 seconds, we send random status to one of the machines
+    // Every 3 seconds, we send random status to one of the machines
     setInterval(() => {
         const statuses = ['STOPPED', 'STARTUP', 'PRODUCING'];
         const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
