@@ -59,3 +59,5 @@ For live status updates, the app expects a WebSocket server reachable at `ws://l
 | ![Img 1](./img/equipment_list.png) | ![Img 2](./img/change_status.png) | ![Img 3](./img/disconnected.png) |
 
 Here is the demo.
+
+https://github.com/user-attachments/assets/890db4df-6c8c-410b-b417-ad5774777803
