@@ -15,7 +15,7 @@ class WebSocketService: WebSocketProtocol {
     private(set) var isConnected = false
 
     let events: AsyncStream<StatusUpdateEvent>
-
+    
     // MARK: - Private
 
     private let logger = Logger(
@@ -38,8 +38,8 @@ class WebSocketService: WebSocketProtocol {
 
     // MARK: - Init
 
-    init(url: URL = URL(string: "ws://localhost:8080")!, session: URLSession = .shared) {
-        self.url = url
+    init(config: WebSocketConfig = .local, session: URLSession = .shared) {
+        self.url = config.url
         self.session = session
         
         // Create stream + continuation
