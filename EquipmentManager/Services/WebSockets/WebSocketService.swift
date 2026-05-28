@@ -38,21 +38,16 @@ class WebSocketService: WebSocketProtocol {
 
     // MARK: - Init
 
-    init(
-        url: URL = URL(string: "ws://localhost:8080")!,
-        session: URLSession = .shared
-    ) {
-
+    init(url: URL = URL(string: "ws://localhost:8080")!, session: URLSession = .shared) {
         self.url = url
         self.session = session
-
-        var streamContinuation: AsyncStream<StatusUpdateEvent>.Continuation!
-
-        self.events = AsyncStream { continuation in
-            streamContinuation = continuation
-        }
-
-        self.continuation = streamContinuation
+        
+        // Create stream + continuation
+        
+        let pair = AsyncStream.makeStream(of: StatusUpdateEvent.self)
+        
+        self.events = pair.stream
+        self.continuation = pair.continuation
     }
 
     deinit {
