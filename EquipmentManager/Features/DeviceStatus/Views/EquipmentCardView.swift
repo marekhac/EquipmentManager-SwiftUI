@@ -28,23 +28,7 @@ struct EquipmentCardView: View {
             isPresented: $isShowingStatusDialog,
             titleVisibility: .visible
         ) {
-
-            statusButton(
-                title: "Set STOPPED",
-                status: .stopped
-            )
-
-            statusButton(
-                title: "Set STARTUP",
-                status: .startup
-            )
-
-            statusButton(
-                title: "Set PRODUCING",
-                status: .producing
-            )
-
-            Button("Cancel", role: .cancel) { }
+            statusDialogButtons
         }
     }
 }
@@ -52,6 +36,23 @@ struct EquipmentCardView: View {
 // MARK: - Subviews
 
 private extension EquipmentCardView {
+    
+    @ViewBuilder
+    func statusButton(title: String, status: EquipmentStatus) -> some View {
+        Button(title) {
+            onStatusChange(status)
+        }
+    }
+    
+    @ViewBuilder
+    private var statusDialogButtons: some View {
+        statusButton(title: "Set STOPPED", status: .stopped)
+        statusButton(title: "Set STARTUP", status: .startup)
+        statusButton(title: "Set PRODUCING", status: .producing)
+
+        Button("Cancel", role: .cancel) { }
+    }
+    
     var statusView: some View {
         ZStack {
             Circle()
@@ -114,12 +115,5 @@ private extension EquipmentCardView {
 private extension EquipmentCardView {
     var statusColor: Color {
         equipment.status.color
-    }
-
-    @ViewBuilder
-    func statusButton(title: String, status: EquipmentStatus) -> some View {
-        Button(title) {
-            onStatusChange(status)
-        }
     }
 }
