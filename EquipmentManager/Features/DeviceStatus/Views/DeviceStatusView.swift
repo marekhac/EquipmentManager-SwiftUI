@@ -55,9 +55,7 @@ private extension DeviceStatusView {
         ProgressView("Loading equipment...")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-}
 
-private extension DeviceStatusView {
     var equipmentListView: some View {
         List {
             ForEach(viewModel.equipments) { equipment in
