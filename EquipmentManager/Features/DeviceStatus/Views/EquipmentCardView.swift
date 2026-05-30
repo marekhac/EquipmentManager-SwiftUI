@@ -9,9 +9,8 @@ import Combine
 import SwiftUI
 
 struct EquipmentCardView: View {
-
     let equipment: Equipment
-    let updateStatusPublisher: PassthroughSubject<StatusUpdateEvent, Never>
+    let onStatusChange: (EquipmentStatus) -> Void
 
     @State private var isShowingStatusDialog = false
 
@@ -120,9 +119,7 @@ private extension EquipmentCardView {
     @ViewBuilder
     func statusButton(title: String, status: EquipmentStatus) -> some View {
         Button(title) {
-            updateStatusPublisher.send(
-                StatusUpdateEvent(equipmentId: equipment.id, status: status)
-            )
+            onStatusChange(status)
         }
     }
 }

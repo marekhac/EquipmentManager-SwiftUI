@@ -38,7 +38,6 @@ For live status updates, the app expects a WebSocket server reachable at `ws://l
 
 * Swift
 * SwiftUI
-* Combine
 * Async/await + AsyncStream
 * URLSessionWebSocketTask
 * OSLog

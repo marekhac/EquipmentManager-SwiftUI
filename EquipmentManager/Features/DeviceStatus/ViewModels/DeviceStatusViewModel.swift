@@ -7,7 +7,6 @@
 
 import Combine
 import Foundation
-import OSLog
 
 @MainActor
 final class DeviceStatusViewModel: ObservableObject {
@@ -18,10 +17,6 @@ final class DeviceStatusViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isConnected = false
     @Published var errorMessage: String?
-
-    // MARK: - Publishers
-
-    let updateStatusPublisher = PassthroughSubject<StatusUpdateEvent, Never>()
 
     // MARK: - Dependencies
 
@@ -34,44 +29,38 @@ final class DeviceStatusViewModel: ObservableObject {
     private var socketTask: Task<Void, Never>?
     private var connectionMonitorTask: Task<Void, Never>?
 
-    private var cancellables = Set<AnyCancellable>()
-
     // MARK: - Init
 
     init(repository: EquipmentProtocol, webSocketService: WebSocketProtocol) {
         self.equipmentService = repository
         self.webSocketService = webSocketService
-
-        observeStatusUpdates()
-    }
-
-    private func observeStatusUpdates() {
-        updateStatusPublisher
-            .sink { [weak self] event in
-                self?.apply(event) }
-            .store(in: &cancellables)
     }
 }
 
 // MARK: - Handling WebSocket connection
 
 extension DeviceStatusViewModel {
-    func start() {
+    func prepareForDisplay() async {
+        await loadEquipment()
+        startSocket()
+    }
+    
+    func startSocket() {
         socketTask?.cancel()
         socketTask = Task {
             await webSocketService.connect()
             
             monitorConnection()
+            
             for await event in webSocketService.events {
                 apply(event)
             }
         }
     }
 
-    func stop() {
+    func cleanUp() {
         socketTask?.cancel()
         connectionMonitorTask?.cancel()
-
         webSocketService.disconnect()
     }
     
@@ -107,7 +96,7 @@ extension DeviceStatusViewModel {
         }
     }
     
-    private func apply(_ event: StatusUpdateEvent) {
+    func apply(_ event: StatusUpdateEvent) {
         guard let index = equipments.firstIndex(where: { $0.id == event.equipmentId }) else {
             return
         }

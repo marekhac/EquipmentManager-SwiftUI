@@ -18,16 +18,20 @@ struct DeviceStatusView: View {
             content
         }
         .task {
-            viewModel.start()
-            await viewModel.loadEquipment()
+            await viewModel.prepareForDisplay()
         }
         .onDisappear {
-            viewModel.stop()
+            viewModel.cleanUp()
         }
     }
 }
 
 private extension DeviceStatusView {
+    private var title: some View {
+        Text("Equipment Manager")
+            .font(.title)
+    }
+    
     @ViewBuilder
     var content: some View {
         if viewModel.isLoading {
@@ -40,12 +44,7 @@ private extension DeviceStatusView {
             }
         }
     }
-    
-    private var title: some View {
-        Text("Equipment Manager")
-            .font(.title)
-    }
-    
+        
     private var status: some View {
         Text("Status: \(viewModel.isConnected ? "Online" : "Offline")")
             .font(.subheadline)
@@ -64,7 +63,11 @@ private extension DeviceStatusView {
             ForEach(viewModel.equipments) { equipment in
                 EquipmentCardView(
                     equipment: equipment,
-                    updateStatusPublisher: viewModel.updateStatusPublisher
+                    onStatusChange: { status in
+                        viewModel.apply(
+                            StatusUpdateEvent(equipmentId: equipment.id, status: status)
+                        )
+                    }
                 )
                 .listRowSeparator(.hidden)
                 .listRowInsets(
