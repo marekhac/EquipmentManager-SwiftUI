@@ -12,8 +12,6 @@ class WebSocketService: WebSocketProtocol {
 
     // MARK: - Public
 
-    private(set) var isConnected = false
-
     let events: AsyncStream<StatusUpdateEvent>
     
     // MARK: - Private
@@ -23,6 +21,9 @@ class WebSocketService: WebSocketProtocol {
         category: "WebSocket"
     )
 
+    private(set) var isConnected = false
+    
+    private let continuation: AsyncStream<StatusUpdateEvent>.Continuation
     private let url: URL
     private let session: URLSession
     private let decoder = JSONDecoder()
@@ -34,8 +35,6 @@ class WebSocketService: WebSocketProtocol {
     private var pingTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
 
-    private let continuation: AsyncStream<StatusUpdateEvent>.Continuation
-
     // MARK: - Init
 
     init(config: WebSocketConfig = .local, session: URLSession = .shared) {
@@ -44,7 +43,10 @@ class WebSocketService: WebSocketProtocol {
         
         // Create stream + continuation
         
-        let pair = AsyncStream.makeStream(of: StatusUpdateEvent.self)
+        let pair = AsyncStream.makeStream(
+            of: StatusUpdateEvent.self,
+            bufferingPolicy: .bufferingNewest(1)
+        )
         
         self.events = pair.stream
         self.continuation = pair.continuation
