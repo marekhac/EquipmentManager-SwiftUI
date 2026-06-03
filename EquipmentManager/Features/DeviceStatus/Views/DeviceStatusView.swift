@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DeviceStatusView: View {
-    @StateObject var viewModel: DeviceStatusViewModel
+    @State var viewModel: DeviceStatusViewModel
 
     // MARK: - Body
     

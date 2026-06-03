@@ -5,21 +5,22 @@
 //  Created by Marek Hac on 25/05/2026.
 //
 
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-final class DeviceStatusViewModel: ObservableObject {
+@Observable
+final class DeviceStatusViewModel {
 
     // MARK: - Published State
 
-    @Published private(set) var equipments: [Equipment] = []
-    @Published private(set) var isLoading = false
-    @Published private(set) var isConnected = false
-    @Published var errorMessage: String?
+    private(set) var equipments: [Equipment] = []
+    private(set) var isLoading = false
+    private(set) var isConnected = false
+    var errorMessage: String?
 
     // MARK: - Dependencies
-
+    
     private let equipmentService: EquipmentProtocol
     private let webSocketService: WebSocketProtocol
 
