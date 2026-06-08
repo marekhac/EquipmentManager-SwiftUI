@@ -12,7 +12,7 @@ struct WebSocketMessage: Codable, Sendable {
     let equipmentId: UUID
     let status: EquipmentStatus
 
-    init(from decoder: Decoder) throws {
+    nonisolated init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.type = try container.decode(WebSocketMessageType.self, forKey: .type)
@@ -32,7 +32,7 @@ struct WebSocketMessage: Codable, Sendable {
     }
 }
 
-enum WebSocketMessageType: String, Codable {
+enum WebSocketMessageType: String, Codable, Sendable {
     case update = "update"
     case heartbeat = "heartbeat"
     case error = "error"

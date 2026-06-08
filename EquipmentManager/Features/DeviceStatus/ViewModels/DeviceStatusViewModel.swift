@@ -10,7 +10,7 @@ import Observation
 
 @MainActor
 @Observable
-final class DeviceStatusViewModel {
+final class DeviceStatusViewModel: Sendable {
 
     // MARK: - Published State
 
@@ -59,19 +59,17 @@ extension DeviceStatusViewModel {
         }
     }
 
-    func cleanUp() {
+    func cleanUp() async {
         socketTask?.cancel()
         connectionMonitorTask?.cancel()
-        webSocketService.disconnect()
+        await webSocketService.disconnect()
     }
     
     private func monitorConnection() {
         connectionMonitorTask?.cancel()
-
         connectionMonitorTask = Task {
-            while !Task.isCancelled {
-                isConnected = webSocketService.isConnected
-                try? await Task.sleep(for: .seconds(1))
+            for await connected in webSocketService.connectionState {
+                isConnected = connected
             }
         }
     }

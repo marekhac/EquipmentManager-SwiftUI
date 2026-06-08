@@ -6,26 +6,14 @@
 //
 
 import Foundation
-import SwiftUI
 
-enum EquipmentStatus: String, Codable, CaseIterable {
+enum EquipmentStatus: String, Codable, Sendable {
     case stopped = "STOPPED"
     case startup = "STARTUP"
     case producing = "PRODUCING"
 }
 
 extension EquipmentStatus {
-    var color: Color {
-        switch self {
-        case .stopped:
-            return .red
-        case .startup:
-            return .orange
-        case .producing:
-            return .green
-        }
-    }
-
     var icon: String {
         switch self {
         case .stopped:

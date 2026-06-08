@@ -21,7 +21,9 @@ struct DeviceStatusView: View {
             await viewModel.prepareForDisplay()
         }
         .onDisappear {
-            viewModel.cleanUp()
+            Task {
+                 await viewModel.cleanUp()
+             }
         }
     }
 }

@@ -7,10 +7,10 @@
 
 import Foundation
 
-struct WebSocketConfig {
+struct WebSocketConfig: Sendable {
     let url: URL
-    
-    static let local = WebSocketConfig(
+        
+    nonisolated static let local = WebSocketConfig(
         url: URL(string: "ws://localhost:8080")!
     )
 }

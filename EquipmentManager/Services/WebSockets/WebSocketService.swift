@@ -8,11 +8,12 @@
 import Foundation
 import OSLog
 
-class WebSocketService: WebSocketProtocol {
+actor WebSocketService: WebSocketProtocol {
 
     // MARK: - Public
 
     let events: AsyncStream<StatusUpdateEvent>
+    let connectionState: AsyncStream<Bool>
     
     // MARK: - Private
 
@@ -24,6 +25,7 @@ class WebSocketService: WebSocketProtocol {
     private(set) var isConnected = false
     
     private let continuation: AsyncStream<StatusUpdateEvent>.Continuation
+    private let connectionContinuation: AsyncStream<Bool>.Continuation
     private let url: URL
     private let session: URLSession
     private let decoder = JSONDecoder()
@@ -50,6 +52,14 @@ class WebSocketService: WebSocketProtocol {
         
         self.events = pair.stream
         self.continuation = pair.continuation
+        
+        let connectionPair = AsyncStream.makeStream(
+            of: Bool.self,
+            bufferingPolicy: .bufferingNewest(1)
+        )
+        
+        self.connectionState = connectionPair.stream
+        self.connectionContinuation = connectionPair.continuation
     }
 
     deinit {
@@ -57,11 +67,11 @@ class WebSocketService: WebSocketProtocol {
     }
 }
 
-// MARK: - Connection
+// MARK: - Public API
 
 extension WebSocketService {
     func connect() async {
-        disconnect()
+        await disconnect()
 
         logger.info("Connecting websocket")
         let task = session.webSocketTask(with: url)
@@ -78,62 +88,40 @@ extension WebSocketService {
         }
     }
 
-    func disconnect() {
+    func disconnect() async {
         logger.info("Disconnecting websocket")
 
-        receiveTask?.cancel()
-        pingTask?.cancel()
-        reconnectTask?.cancel()
-
-        receiveTask = nil
-        pingTask = nil
-        reconnectTask = nil
+        cancelTasks()
 
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
 
-        isConnected = false
+        updateConnectionState(false)
     }
 }
 
-// MARK: - Receive
+// MARK: - Connection Loops
 
 private extension WebSocketService {
     func receiveLoop() async {
-
         guard let webSocketTask else { return }
         while !Task.isCancelled {
-            let message: URLSessionWebSocketTask.Message
             do {
-                message = try await webSocketTask.receive()
+                let message = try await webSocketTask.receive()
+                try handle(message)
             } catch {
                 await handleFailure(error)
                 return
             }
-
-            do {
-                try handle(message)
-                if !isConnected {
-                    isConnected = true
-                }
-            } catch {
-                let error = WebSocketError.malformedMessage(error)
-                logger.error("\(error.localizedDescription)")
-            }
         }
     }
-}
 
-// MARK: - Ping
-
-private extension WebSocketService {
     func pingLoop() async {
         while !Task.isCancelled {
             do {
                 try await sendPing()
-                if !isConnected {
-                    isConnected = true
-                }
+                updateConnectionState(true)
+
                 try await Task.sleep(for: .seconds(10))
             } catch {
                 await handleFailure(error)
@@ -147,7 +135,9 @@ private extension WebSocketService {
             throw WebSocketError.notConnected
         }
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withCheckedThrowingContinuation {
+            (continuation: CheckedContinuation<Void, Error>) in
+
             webSocketTask.sendPing { error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -188,7 +178,7 @@ private extension WebSocketService {
     }
 }
 
-// MARK: - Failure Handling
+// MARK: - State Management
 
 private extension WebSocketService {
     func handleFailure(_ error: Error) async {
@@ -196,7 +186,7 @@ private extension WebSocketService {
             "WebSocket failure: \(error.localizedDescription)"
         )
         
-        isConnected = false
+        updateConnectionState(false)
         await reconnect()
     }
     
@@ -204,15 +194,36 @@ private extension WebSocketService {
         reconnectTask?.cancel()
         reconnectTask = Task {
             do {
-                try await Task.sleep(for: .seconds(3))
-                guard !Task.isCancelled else { return }
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else {
+                    return
+                }
                 await connect()
-                
             } catch is CancellationError {
-                // superseded by a newer reconnect or by disconnect()
             } catch {
                 await handleFailure(error)
             }
         }
+    }
+    
+    private func updateConnectionState(_ connected: Bool) {
+        guard isConnected != connected else { return }
+
+        isConnected = connected
+        connectionContinuation.yield(connected)
+    }
+}
+
+// MARK: - Utilities
+
+private extension WebSocketService {
+    func cancelTasks() {
+        receiveTask?.cancel()
+        pingTask?.cancel()
+        reconnectTask?.cancel()
+
+        receiveTask = nil
+        pingTask = nil
+        reconnectTask = nil
     }
 }

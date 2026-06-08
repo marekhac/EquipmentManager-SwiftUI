@@ -8,9 +8,10 @@
 import Foundation
 
 protocol WebSocketProtocol: Sendable {
-    var isConnected: Bool { get }
+    var isConnected: Bool { get async }
     var events: AsyncStream<StatusUpdateEvent> { get }
-
+    var connectionState: AsyncStream<Bool> { get }
+    
     func connect() async
-    func disconnect()
+    func disconnect() async
 }

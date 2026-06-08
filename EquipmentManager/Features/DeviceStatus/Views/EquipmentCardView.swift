@@ -117,3 +117,16 @@ private extension EquipmentCardView {
         equipment.status.color
     }
 }
+
+private extension EquipmentStatus {
+    var color: Color {
+        switch self {
+        case .stopped:
+            return .red
+        case .startup:
+            return .orange
+        case .producing:
+            return .green
+        }
+    }
+}
